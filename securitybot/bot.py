@@ -343,7 +343,8 @@ class SecurityBot(object):
         logging.info('Gathering information about all team members...')
         members = self.chat.get_users()
         for member in members:
-            user = User(member, self.auth_builder(member['name']), self)
+            auth_builder = self.auth_builder(member['name']) if self.auth_builder else None
+            user = User(member, auth_builder, self)
             self.users[member['id']] = user
             self.users_by_name[member['name']] = user
         logging.info('Gathered info on {} users.'.format(len(self.users)))

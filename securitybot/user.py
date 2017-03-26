@@ -38,7 +38,7 @@ class User(object):
         self._user = user # type: Dict[str, Any]
         self.tasks = [] # type: List[Task]
         self.pending_task = None # type: Task
-        # Authetnication object specific to this user
+        # Authentication object specific to this user
         self.auth = auth
 
         # Parent pointer to bot
@@ -182,7 +182,7 @@ class User(object):
 
     def _cannot_2fa(self):
         # type: () -> bool
-        return self._performed_action() and not self.auth.can_auth()
+        return self._performed_action() and not (self.auth and self.auth.can_auth())
 
     def _performed_action(self):
         # type: () -> bool
@@ -384,15 +384,19 @@ class User(object):
         Attempts to authorize this user. Changes the user's state to
         WAITING_ON_AUTH.
         '''
-        self.send_message('sending_push')
-        self.auth.auth(self.pending_task.description)
+        if self.auth:
+            self.send_message('sending_push')
+            self.auth.auth(self.pending_task.description)
 
     def auth_status(self):
         # type: () -> int
         '''
         Gets the current authorization status.
         '''
-        return self.auth.auth_status()
+        if self.auth:
+            return self.auth.auth_status()
+        else:
+            return AUTH_STATES.NONE
 
     def reset_auth(self):
         # type: () -> None
@@ -400,7 +404,8 @@ class User(object):
         Resets this user's authorization status, including no longer accepting
         authorization due to being "recently" authorized.
         '''
-        self.auth.reset()
+        if self.auth:
+            self.auth.reset()
 
     # Utility methods
 
