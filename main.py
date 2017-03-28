@@ -16,7 +16,7 @@ DUO_INTEGRATION = getenv('DUO_INTEGRATION_KEY')
 DUO_SECRET = getenv('DUO_SECRET_KEY')
 DUO_ENDPOINT = getenv('DUO_ENDPOINT')
 REPORTING_CHANNEL = getenv('REPORTING_CHANNEL', 'some_slack_channel_id')
-ICON_URL = 'https://dl.dropboxusercontent.com/s/t01pwfrqzbz3gzu/securitybot.png'
+ICON_URL = getenv('ICON_URL', 'https://dl.dropboxusercontent.com/s/t01pwfrqzbz3gzu/securitybot.png')
 
 def init():
     # Setup logging
