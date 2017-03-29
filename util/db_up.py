@@ -6,9 +6,10 @@ from os import getenv
 # DB CONFIG GOES HERE
 host = getenv('DB_HOST', 'localhost')
 user = getenv('DB_USER', 'root')
-passwd=getenv('DB_PASS', '')
-dbname=getenv('DB_NAME', 'securitybot')
+passwd = getenv('DB_PASS', '')
+dbname = getenv('DB_NAME', 'securitybot')
 
+print "Connecting to %s with user '%s' (using password: %s)" % (host, user, "no" if passwd == '' else 'yes')
 db = MySQLdb.connect(host=host,
                      user=user,
                      passwd=passwd,
@@ -29,7 +30,7 @@ for table in tables:
 print 'Creating tables...'
 
 cur.execute(
-'''
+    '''
 CREATE TABLE blacklist (
    ldap VARCHAR(255) NOT NULL,
    PRIMARY KEY ( ldap )
@@ -38,7 +39,7 @@ CREATE TABLE blacklist (
 )
 
 cur.execute(
-'''
+    '''
 CREATE TABLE ignored (
     ldap VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -50,7 +51,7 @@ CREATE TABLE ignored (
 )
 
 cur.execute(
-'''
+    '''
 CREATE TABLE alerts (
     hash BINARY(32) NOT NULL,
     ldap VARCHAR(255) NOT NULL,
@@ -65,7 +66,7 @@ CREATE TABLE alerts (
 )
 
 cur.execute(
-'''
+    '''
 CREATE TABLE alert_status (
     hash BINARY(32) NOT NULL,
     status TINYINT UNSIGNED NOT NULL,
@@ -75,7 +76,7 @@ CREATE TABLE alert_status (
 )
 
 cur.execute(
-'''
+    '''
 CREATE TABLE user_responses(
     hash BINARY(32) NOT NULL,
     comment TEXT,
