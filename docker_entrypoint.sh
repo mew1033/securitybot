@@ -14,7 +14,7 @@ if ! mysql --user $DB_USER --password=$DB_PASS --host=$DB_HOST -e"use $DB_NAME";
   echo "Creating database"
   mysql --user $DB_USER --password=$DB_PASS --host=$DB_HOST -e"create database $DB_NAME"
   echo "Populating database"
-  exec python securitybot/util/db_up.py
+  exec python /securitybot/util/db_up.py
 fi
 echo "Database exists"
 
