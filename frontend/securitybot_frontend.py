@@ -20,6 +20,18 @@ import securitybot_api as api
 # Typing
 from typing import Sequence
 
+
+class BaseHandler(tornado.web.RequestHandler):
+    pass
+
+
+# Sentry integration
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+if SENTRY_DSN:
+    from raven.contrib.tornado import SentryMixin
+    BaseHandler.__bases__ = (SentryMixin,) + BaseHandler.__bases__
+
+
 def get_endpoint(handler, defaults, callback):
     '''
     Makes a call to an API endpoint, using parameters from default.
@@ -36,6 +48,7 @@ def get_endpoint(handler, defaults, callback):
     except Exception as e:
         handler.write(api.exception_response(e))
 
+
 # List of tuples of name, default, parser
 QUERY_ARGUMENTS = [
     ('limit', 50, int),
@@ -48,28 +61,34 @@ QUERY_ARGUMENTS = [
     ('before', None, int),
 ]
 
-class QueryHandler(tornado.web.RequestHandler):
+
+class QueryHandler(BaseHandler):
     def get(self):
         get_endpoint(self, QUERY_ARGUMENTS, api.query)
+
 
 IGNORED_ARGUMENTS = [
     ('limit', 50, int),
     ('ldap', None, lambda s: list(reader([s]))[0]),
 ]
 
-class IgnoredHandler(tornado.web.RequestHandler):
+
+class IgnoredHandler(BaseHandler):
     def get(self):
         get_endpoint(self, IGNORED_ARGUMENTS, api.ignored)
+
 
 BLACKLIST_ARGUMENTS = [
     ('limit', 50, int),
 ]
 
-class BlacklistHandler(tornado.web.RequestHandler):
+
+class BlacklistHandler(BaseHandler):
     def get(self):
         get_endpoint(self, BLACKLIST_ARGUMENTS, api.blacklist)
 
-class NewAlertHandler(tornado.web.RequestHandler):
+
+class NewAlertHandler(BaseHandler):
     def post(self):
         response = api.build_response()
         args = {}
@@ -85,12 +104,14 @@ class NewAlertHandler(tornado.web.RequestHandler):
         else:
             self.write(response)
 
-class IndexHandler(tornado.web.RequestHandler):
+
+class IndexHandler(BaseHandler):
     def get(self):
         self.render()
 
     def render(self):
         self.write(self.render_string("templates/index.html"))
+
 
 class SecuritybotService(object):
     '''Registers handlers and kicks off the HTTPServer and IOLoop'''
@@ -107,12 +128,18 @@ class SecuritybotService(object):
             (r'/api/blacklist', BlacklistHandler),
             (r'/api/create', NewAlertHandler),
         ],
-        xsrf_cookie=True,
-        static_path=static_path,
+            xsrf_cookie=True,
+            static_path=static_path,
         )
         self.server = tornado.httpserver.HTTPServer(self._app)
         self.sockets = tornado.netutil.bind_sockets(self.port, '0.0.0.0')
         self.server.add_sockets(self.sockets)
+
+        # Sentry integration
+        if SENTRY_DSN:
+            from raven.contrib.tornado import AsyncSentryClient
+            self._app.sentry_client = AsyncSentryClient(SENTRY_DSN)
+
         for s in self.sockets:
             sockname = s.getsockname()
             logging.info('Listening on {socket}, port {port}'
@@ -132,18 +159,18 @@ class SecuritybotService(object):
         # type: () -> Sequence[str]
         return self.sockets[0].getsockname()[:2]
 
+
 def init():
     # type: () -> None
-    logging.basicConfig(level=logging.DEBUG,
-                        format='[%(asctime)s %(levelname)s] %(message)s')
-
+    logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s %(levelname)s] %(message)s')
     api.init_api()
+
 
 def main(port):
     # type: (int) -> None
     logging.info('Starting up!')
     try:
-        service = SecuritybotService(port)
+        service = SecuritybotService(str(port))
 
         def shutdown():
             logging.info('Shutting down!')
@@ -159,7 +186,7 @@ def main(port):
 if __name__ == '__main__':
     init()
 
-    parser = argparse.ArgumentParser(description='Securitybot frontent')
+    parser = argparse.ArgumentParser(description='Securitybot frontend')
     parser.add_argument('--port', dest='port', default='8888', type=int)
     args = parser.parse_args()
 
