@@ -7,7 +7,6 @@ from securitybot.tasker.sql_tasker import SQLTasker
 from securitybot.auth.duo import DuoAuth
 from securitybot.sql import init_sql
 from os import getenv
-
 import duo_client
 
 CONFIG = {}
@@ -17,6 +16,7 @@ DUO_SECRET = getenv('DUO_SECRET_KEY')
 DUO_ENDPOINT = getenv('DUO_ENDPOINT')
 REPORTING_CHANNEL = getenv('REPORTING_CHANNEL', 'some_slack_channel_id')
 ICON_URL = getenv('ICON_URL', 'https://dl.dropboxusercontent.com/s/t01pwfrqzbz3gzu/securitybot.png')
+SENTRY_DSN = getenv('SENTRY_DSN')
 
 def init():
     # Setup logging
@@ -24,6 +24,15 @@ def init():
                         format='[%(asctime)s %(levelname)s] %(message)s')
     logging.getLogger('requests').setLevel(logging.WARNING)
     logging.getLogger('usllib3').setLevel(logging.WARNING)
+
+    # setup Sentry
+    if SENTRY_DSN:
+        from raven import Client
+        from raven.handlers.logging import SentryHandler
+        from raven.conf import setup_logging
+        sentry_client = Client(SENTRY_DSN)
+        handler = SentryHandler(sentry_client)
+        setup_logging(handler)
 
 def main():
     init()
