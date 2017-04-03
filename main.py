@@ -6,6 +6,7 @@ from securitybot.chat.slack import Slack
 from securitybot.tasker.sql_tasker import SQLTasker
 from securitybot.auth.duo import DuoAuth
 from securitybot.sql import init_sql
+from securitybot.util import init_scribe_logging
 from os import getenv
 import duo_client
 
@@ -24,6 +25,7 @@ def init():
                         format='[%(asctime)s %(levelname)s] %(message)s')
     logging.getLogger('requests').setLevel(logging.WARNING)
     logging.getLogger('usllib3').setLevel(logging.WARNING)
+    init_scribe_logging()
 
     # setup Sentry
     if SENTRY_DSN:

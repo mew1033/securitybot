@@ -27,3 +27,4 @@ typing==3.5.2.2
 unittest2==1.1.0
 websocket-client==0.37.0
 raven==6.0.0
+scribe_logger==1.3

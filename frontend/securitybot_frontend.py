@@ -16,6 +16,7 @@ import tornado.web
 
 # Securitybot includes
 import securitybot_api as api
+from securitybot.util import init_scribe_logging
 
 # Typing
 from typing import Sequence
@@ -163,6 +164,8 @@ class SecuritybotService(object):
 def init():
     # type: () -> None
     logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s %(levelname)s] %(message)s')
+
+    init_scribe_logging()
     api.init_api()
 
 

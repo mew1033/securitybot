@@ -4,10 +4,12 @@ __email__ = 'abertsch@dropbox.com'
 import pytz
 import binascii
 import os
+import logging
 from datetime import datetime, timedelta
 from collections import namedtuple
 
 from securitybot.sql import SQLEngine
+from scribe_logger.logger import ScribeLogHandler
 
 # http://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python
 def enum(*sequential, **named):
@@ -93,3 +95,12 @@ def create_new_alert(title, ldap, description, reason, url='N/A', key=None):
 
     SQLEngine.execute('INSERT INTO alert_status (hash, status) VALUES (UNHEX(%s), 0)',
                       (key,))
+
+def init_scribe_logging():
+    SCRIBE_HOST = os.getenv('SCRIBE_HOST')
+    SCRIBE_PORT = os.getenv('SCRIBE_PORT', 1463)
+    SCRIBE_CATEGORY = os.getenv('SCRIBE_CATEGORY', 'securitybot')
+    if SCRIBE_HOST:
+        scribe_handler = ScribeLogHandler(SCRIBE_HOST, SCRIBE_PORT, category=SCRIBE_CATEGORY)
+        scribe_handler.setLevel(logging.DEBUG)
+        logging.getLogger().addHandler(scribe_handler)
