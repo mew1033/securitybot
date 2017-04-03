@@ -47,6 +47,9 @@ To prevent having to modify the scripts, you can set the following environment v
 |DB_USER|MySQL Username|
 |DB_PASS|MySQL Password|
 |DB_NAME|MySQL Database name|
+|SCRIBE_HOST|Scribe host (leave it empty for disabling Scribe logging)|
+|SCRIBE_PORT|Scribe port (1463 by default)|
+|SCRIBE_CATEGORY|Scribe category to use (optional)|
 
 #### Docker
 
