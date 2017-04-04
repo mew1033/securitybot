@@ -110,6 +110,7 @@ class Slack(Chat):
         As channels are possibly chat-system specific, this function has a horrible
         type signature.
         '''
+        logging.debug('Slack message sent.')
         self._api_call('chat.postMessage', channel=channel,
                                            text=message,
                                            username=self._username,

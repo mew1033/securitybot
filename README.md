@@ -40,6 +40,7 @@ To prevent having to modify the scripts, you can set the following environment v
 |--------|-------|
 |SLACK_API_TOKEN|Slack API Token|
 |REPORTING_CHANNEL|Slack Channel ID|
+|ICON_URL|The URL of the bot's avatar picture|
 |DUO_INTEGRATION_KEY|Duo Integration Key|
 |DUO_SECRET_KEY|Duo Secret Key|
 |DUO_ENDPOINT|Duo Endpoint|
@@ -47,6 +48,9 @@ To prevent having to modify the scripts, you can set the following environment v
 |DB_USER|MySQL Username|
 |DB_PASS|MySQL Password|
 |DB_NAME|MySQL Database name|
+|SENTRY_DSN|Sentry DSN (leabe it empty to disable Sentry logging)|
+|ENVIRONMENT|Used for logging to distinguish different environments (eg. production/test)|
+|HOSTNAME|Used for logging to distinguish different instances|
 |SCRIBE_HOST|Scribe host (leave it empty for disabling Scribe logging)|
 |SCRIBE_PORT|Scribe port (1463 by default)|
 |SCRIBE_CATEGORY|Scribe category to use (optional)|

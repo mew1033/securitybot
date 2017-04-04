@@ -16,7 +16,7 @@ import tornado.web
 
 # Securitybot includes
 import securitybot_api as api
-from securitybot.util import init_scribe_logging
+from securitybot.util import init_scribe_logging, init_sentry_logging
 
 # Typing
 from typing import Sequence
@@ -166,6 +166,7 @@ def init():
     logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s %(levelname)s] %(message)s')
 
     init_scribe_logging()
+    init_sentry_logging()
     api.init_api()
 
 
@@ -188,7 +189,7 @@ def main(port):
 
 if __name__ == '__main__':
     init()
-
+    logging.warning("Securitybot [frontend] restarted.")
     parser = argparse.ArgumentParser(description='Securitybot frontend')
     parser.add_argument('--port', dest='port', default='8888', type=int)
     args = parser.parse_args()

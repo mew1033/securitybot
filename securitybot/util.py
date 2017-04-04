@@ -96,6 +96,7 @@ def create_new_alert(title, ldap, description, reason, url='N/A', key=None):
     SQLEngine.execute('INSERT INTO alert_status (hash, status) VALUES (UNHEX(%s), 0)',
                       (key,))
 
+
 def init_scribe_logging():
     SCRIBE_HOST = os.getenv('SCRIBE_HOST')
     SCRIBE_PORT = os.getenv('SCRIBE_PORT', 1463)
@@ -104,3 +105,14 @@ def init_scribe_logging():
         scribe_handler = ScribeLogHandler(SCRIBE_HOST, SCRIBE_PORT, category=SCRIBE_CATEGORY)
         scribe_handler.setLevel(logging.DEBUG)
         logging.getLogger().addHandler(scribe_handler)
+
+
+def init_sentry_logging():
+    SENTRY_DSN = os.getenv('SENTRY_DSN')
+    if SENTRY_DSN:
+        from raven import Client
+        from raven.handlers.logging import SentryHandler
+        from raven.conf import setup_logging
+        sentry_client = Client(SENTRY_DSN, environment=os.getenv('ENVIRONMENT', 'default'))
+        handler = SentryHandler(sentry_client, level=logging.WARNING)
+        setup_logging(handler)
