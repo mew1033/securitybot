@@ -102,7 +102,7 @@ def init_scribe_logging():
     SCRIBE_PORT = os.getenv('SCRIBE_PORT', 1463)
     SCRIBE_CATEGORY = os.getenv('SCRIBE_CATEGORY', 'securitybot')
     if SCRIBE_HOST:
-        formatter = logging.Formatter('%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s')
+        formatter = logging.Formatter('%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s\n')
         scribe_handler = ScribeLogHandler(SCRIBE_HOST, SCRIBE_PORT, category=SCRIBE_CATEGORY)
         scribe_handler.setLevel(logging.DEBUG)
         scribe_handler.setFormatter(formatter)
