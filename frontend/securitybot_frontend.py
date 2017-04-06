@@ -114,6 +114,11 @@ class IndexHandler(BaseHandler):
         self.write(self.render_string("templates/index.html"))
 
 
+class HealthcheckHandler(BaseHandler):
+    def get(self):
+        self.write('200 OK')
+
+
 class SecuritybotService(object):
     '''Registers handlers and kicks off the HTTPServer and IOLoop'''
 
@@ -124,6 +129,7 @@ class SecuritybotService(object):
         static_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static/')
         self._app = tornado.web.Application([
             (r'/', IndexHandler),
+            (r'/healthcheck', HealthcheckHandler),
             (r'/api/query', QueryHandler),
             (r'/api/ignored', IgnoredHandler),
             (r'/api/blacklist', BlacklistHandler),
