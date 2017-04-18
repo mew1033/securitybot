@@ -73,6 +73,7 @@ class SQLEngine(object):
         if params is None:
             params = ()
         try:
+            logging.debug("Running query: {}".format(query.replace('\n', '')))
             SQLEngine._cursor.execute(query, params)
             rows = SQLEngine._cursor.fetchall()
             SQLEngine._conn.commit()
