@@ -37,6 +37,9 @@ escalated: >
     That's fine. Don't worry, I'll share this with the security team and they'll
     look into this and get back to you if they need more.
 
+already_verified: >
+    This action has been confirmed by someone else, so you have nothing to do.
+
 # Message sent when no 2FA is available
 no_2fa: >
     It doesn't look like you have 2FA set up on your account.

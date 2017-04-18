@@ -2,6 +2,9 @@
 An object to manage user interactions.
 Wraps user information, all known alerts, and an active DM channel with the user.
 '''
+from os import getenv
+
+
 __author__ = 'Alex Bertsch'
 __email__ = 'abertsch@dropbox.com'
 
@@ -16,8 +19,8 @@ from securitybot.util import tuple_builder, get_expiration_time
 
 from typing import Any, Dict, List
 
-ESCALATION_TIME = timedelta(hours=2)
-BACKOFF_TIME = timedelta(hours=21)
+ESCALATION_TIME = timedelta(hours=int(getenv('ESCALATION_TIME', 2)))
+BACKOFF_TIME = timedelta(hours=int(getenv('BACKOFF_TIME', 21)))
 
 class User(object):
     '''
@@ -66,6 +69,13 @@ class User(object):
                 'source': 'need_task',
                 'dest': 'action_performed_check',
                 'condition': self._has_tasks
+            },
+            # Notify user if action was already performed by someone else
+            {
+                'source': 'action_performed_check',
+                'dest': 'task_finished',
+                'condition': self._already_verified,
+                'action': lambda: self.send_message('already_verified')
             },
             # Finish task if user says action was performed and recently authorized
             {
@@ -172,6 +182,9 @@ class User(object):
         '''Checks if the user has any tasks.'''
         return len(self.tasks) != 0
 
+    def _already_verified(self):
+        return self.pending_task.is_verifying()
+
     def _already_authed(self):
         # type: () -> bool
         '''
@@ -226,6 +239,7 @@ class User(object):
         self.pending_task.set_verifying()
         self._escalation_time = datetime.max.replace(tzinfo=pytz.utc)
         self.send_message('no_response')
+        self._send_alert_to_reporting_channel()
 
     def _act_on_not_performed(self):
         # type: () -> None
@@ -235,6 +249,9 @@ class User(object):
         '''
         # Send escalation method
         self.send_message('escalated')
+        self._send_alert_to_reporting_channel()
+
+    def _send_alert_to_reporting_channel(self):
         # Alert bot's reporting channel
         if self.parent.reporting_channel is not None:
             # Format message

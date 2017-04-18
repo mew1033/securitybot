@@ -78,7 +78,7 @@ class SQLEngine(object):
             SQLEngine._conn.commit()
         except (AttributeError, MySQLdb.OperationalError):
             # Recover from lost connection
-            logging.warn('Recovering from lost MySQL connection.')
+            logging.exception('Recovering from lost MySQL connection.')
             SQLEngine._create_engine(SQLEngine._host,
                                      SQLEngine._user,
                                      SQLEngine._passwd,

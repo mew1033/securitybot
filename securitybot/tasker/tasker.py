@@ -4,11 +4,13 @@ their statuses once acted up. This file contains two abstract classes,
 Tasker and Task, which define a class to manage tasks and a task class
 respectively.
 '''
+from datetime import datetime
+from abc import ABCMeta, abstractmethod
+from securitybot.util import enum
+
 __author__ = 'Alex Bertsch'
 __email__ = 'abertsch@dropbox.com'
 
-from abc import ABCMeta, abstractmethod
-from securitybot.util import enum
 
 class Tasker(object):
     '''
@@ -47,11 +49,12 @@ class Tasker(object):
 # Task status levels
 STATUS_LEVELS = enum('OPEN', 'INPROGRESS', 'VERIFICATION')
 
+
 class Task(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, title, username, reason, description, url, performed, comment,
-            authenticated, status):
+            authenticated, status, event_time=None, escalation=None):
         # type: (str, str, str, str, str, bool, str, bool, int) -> None
         '''
         Creates a new Task for an alert that should go to `username` and is
@@ -79,6 +82,8 @@ class Task(object):
         self.comment = comment
         self.authenticated = authenticated
         self.status = status
+        self.event_time = event_time
+        self.escalation = escalation
 
     @abstractmethod
     def set_open(self):
@@ -106,3 +111,41 @@ class Task(object):
         actions to ensure that the corresponding tasker sees it as such.
         '''
         pass
+
+    @abstractmethod
+    def is_verifying(self):
+        #type: () -> None
+        '''
+        Returns True if the task is in Verifying state, False otherwise
+        '''
+        pass
+
+    @abstractmethod
+    def set_escalated(self, escalation):
+        # type: (Escalation) -> None
+        '''
+        Sets the associated escalation as escalated.
+        '''
+        pass
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class Escalation(object):
+    def __init__(self, ldap, delay_in_sec, escalated_at=None):
+        self.ldap = ldap
+        self.delay_in_sec = delay_in_sec
+        self._notified_at = escalated_at
+
+    def is_notified(self):
+        return self._notified_at is not None
+
+    def set_notified(self):
+        self._notified_at = datetime.now()
+
+    def should_notify(self, elapsed_timedelta):
+        return not self.is_notified() and elapsed_timedelta.seconds > self.delay_in_sec
+
+    def __str__(self):
+        return str(self.__dict__)

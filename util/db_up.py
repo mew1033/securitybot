@@ -79,10 +79,24 @@ cur.execute(
     '''
 CREATE TABLE user_responses(
     hash BINARY(32) NOT NULL,
+    ldap VARCHAR(255) NOT NULL,
     comment TEXT,
     performed BOOL,
     authenticated BOOL,
+    updated_at DATETIME NOT NULL,
     PRIMARY KEY ( hash )
+)
+'''
+)
+
+cur.execute(
+    '''
+CREATE TABLE escalation(
+    hash BINARY(32) NOT NULL,
+    ldap VARCHAR(255) NOT NULL,
+    delay_in_sec INTEGER NOT NULL,
+    escalated_at DATETIME,
+    PRIMARY KEY ( hash, ldap )
 )
 '''
 )

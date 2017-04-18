@@ -2,6 +2,7 @@
 API for the Securitybot database.
 '''
 # Securitybot imports
+import logging
 from securitybot.sql import SQLEngine, SQLEngineException, init_sql
 from securitybot.util import create_new_alert
 
@@ -295,8 +296,9 @@ def blacklist(**kwargs):
     response['ok'] = True
     return response
 
+
 # Custom alert creation
-def create_alert(ldap, title, description, reason):
+def create_alert(ldap, title, description, reason, url=None, escalation=None):
     # type: (str, str, str, str) -> Dict[str, Any]
     '''
     Creates a new alert.
@@ -305,12 +307,14 @@ def create_alert(ldap, title, description, reason):
         title: The internal title
         description: A short slug that describes the alert/user visible title
         reason: The reason for creating the alert
+        url: An optional URL associated with the alert
+        escalation: A list of Escalations
     Content:
         Empty.
     '''
     response = build_response()
     try:
-        create_new_alert(title, ldap, description, reason)
+        create_new_alert(title, ldap, description, reason, url=url, escalation_list=escalation)
     except SQLEngineException:
         response['error'] = 'Invalid parameters'
         return response

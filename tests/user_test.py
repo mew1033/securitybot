@@ -1,5 +1,5 @@
 from unittest2 import TestCase
-from mock import Mock, patch
+from mock import Mock, patch, MagicMock
 
 from collections import defaultdict
 from datetime import timedelta
@@ -61,6 +61,7 @@ class UserTest(TestCase):
         test_user = user.User({}, auth, self.bot)
 
         task = mock_task.start()
+        task.is_verifying = MagicMock(return_value=False)
 
         assert str(test_user._fsm.state) == 'need_task'
 
@@ -141,6 +142,7 @@ class UserTest(TestCase):
         test_user.send_message = Mock()
 
         task = mock_task.start()
+        task.is_verifying = MagicMock(return_value=False)
 
         assert str(test_user._fsm.state) == 'need_task'
 
@@ -256,6 +258,7 @@ class UserTest(TestCase):
         test_user = user.User({}, auth, self.bot)
 
         task = mock_task.start()
+        task.is_verifying = MagicMock(return_value=False)
 
         assert str(test_user._fsm.state) == 'need_task'
 
@@ -291,8 +294,10 @@ class UserTest(TestCase):
         auth.can_auth.return_value = True
         self.bot.messages = defaultdict(str)
         test_user = user.User({}, auth, self.bot)
+        test_user._send_alert_to_reporting_channel = MagicMock()
 
         task = mock_task.start()
+        task.is_verifying = MagicMock(return_value=False)
 
         assert str(test_user._fsm.state) == 'need_task'
 
@@ -302,8 +307,6 @@ class UserTest(TestCase):
 
         # Auto-escalation should happen immediately because escalation time
         # is set in the past
-
-
         test_user.step()
         assert str(test_user._fsm.state) == 'task_finished'
         task.set_verifying.assert_called_with()
@@ -320,6 +323,7 @@ class UserTest(TestCase):
         test_user = user.User({}, auth, self.bot)
 
         task = mock_task.start()
+        task.is_verifying = MagicMock(return_value=False)
 
         assert str(test_user._fsm.state) == 'need_task'
 

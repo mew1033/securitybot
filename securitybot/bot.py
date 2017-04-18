@@ -2,6 +2,8 @@
 The internals of securitybot. Defines a core class SecurityBot that manages
 most of the bot's behavior.
 '''
+from securitybot import tasker
+
 __author__ = 'Alex Bertsch'
 __email__ = 'abertsch@dropbox.com'
 
@@ -17,12 +19,12 @@ import string
 import securitybot.commands as bot_commands
 from securitybot.blacklist.sql_blacklist import SQLBlacklist
 from securitybot.chat.chat import Chat
-from securitybot.tasker.tasker import Task, Tasker
+from securitybot.tasker.tasker import Task, Tasker, STATUS_LEVELS
 from securitybot.auth.auth import Auth
 
 from typing import Any, Callable, Dict, List, Tuple
 
-TASK_POLL_TIME = timedelta(minutes=1)
+TASK_POLL_TIME = timedelta(seconds=10)
 REPORTING_TIME = timedelta(hours=1)
 
 DEFAULT_COMMAND = {
@@ -53,6 +55,7 @@ def clean_input(text):
 
 PUNCTUATION = '.,!?\'"`'
 
+
 def clean_command(command):
     # type: (str) -> str
     '''Cleans a command.'''
@@ -62,6 +65,7 @@ def clean_command(command):
     # Remove punctuation people are likely to use and won't interfere with command names
     command = command.translate(string.maketrans('', ''), PUNCTUATION)
     return command
+
 
 class SecurityBot(object):
     '''
@@ -101,6 +105,9 @@ class SecurityBot(object):
 
         # Dictionary of users who have outstanding tasks
         self.active_users = {} # type: Dict[str, User]
+
+        # Dictionary of active tasks to have only one instance of every active task
+        self.active_tasks = {}
 
         # Recover tasks
         self.recover_in_progress_tasks()
@@ -163,8 +170,20 @@ class SecurityBot(object):
                 self.commands[name] = new_cmd
         logging.info('Loaded commands: {0}'.format(self.commands.keys()))
 
-    # Bot functions
+    def _store_or_update_active_task(self, task):
+        if task.hash in self.active_tasks:
+            active_task = self.active_tasks.get(task.hash)
+            active_task.status = task.status
+            return active_task
+        else:
+            self.active_tasks[task.hash] = task
+            return task
 
+    def _remove_active_task(self, task):
+        if task.hash in self.active_tasks:
+            del self.active_tasks[task.hash]
+
+    # Bot functions
     def run(self):
         # type: () -> None
         '''
@@ -180,6 +199,10 @@ class SecurityBot(object):
             self.handle_messages()
             self.handle_users()
             time.sleep(.1)
+
+            for task_hash, task in self.active_tasks.items():
+                if task.status == STATUS_LEVELS.VERIFICATION:
+                    del self.active_tasks[task_hash]
 
     def handle_messages(self):
         # type: () -> None
@@ -229,15 +252,11 @@ class SecurityBot(object):
             logging.warn('{}'.format(e))
             return False
 
-    def _add_task(self, task):
-        # type: (Task) -> None
+    def _assign_task_to_user(self, task, username):
+        # type: (Task, str) -> None
         '''
-        Adds a new task to the user specified by that task.
-
-        Args:
-            task (Task): the task to add.
+        Assigns a task to a user
         '''
-        username = task.username
         if self.valid_user(username):
             # Ignore blacklisted users
             if self.blacklist.is_present(username):
@@ -257,7 +276,26 @@ class SecurityBot(object):
             # Escalate if no valid user is found
             logging.warn('Invalid user: {0}'.format(username))
             task.comment = 'invalid user'
-            task.set_verifying()
+            if task.escalation is None or len(task.escalation) == 0:
+                task.set_verifying()
+
+    def _add_task(self, task):
+        # type: (Task) -> None
+        '''
+        Adds a new task to the user specified by that task.
+
+        Args:
+            task (Task): the task to add.
+        '''
+
+        if task.escalation and isinstance(task.escalation, list):
+            for esc in task.escalation:
+                if esc.delay_in_sec == 0:
+                    logging.info("Notify {0} now".format(esc.ldap))
+                    task.set_escalated(esc)
+                    self._assign_task_to_user(task, esc.ldap)
+        else:
+            self._assign_task_to_user(task, task.username)
 
     def handle_new_tasks(self):
         # type: () -> None
@@ -266,8 +304,8 @@ class SecurityBot(object):
         '''
         for task in self.tasker.get_new_tasks():
             # Log new task
+            task = self._store_or_update_active_task(task)
             logging.info('Handling new task for {0}'.format(task.username))
-
             self._add_task(task)
 
     def handle_in_progress_tasks(self):
@@ -275,7 +313,19 @@ class SecurityBot(object):
         '''
         Handles all in progress tasks.
         '''
-        pass
+        now = datetime.now()
+        for task in self.tasker.get_active_tasks():
+            task = self._store_or_update_active_task(task)
+            logging.info('Handling in-progress task {0}'.format(task))
+            elapsed_timedelta = now - task.event_time
+
+            for escalation in task.escalation:
+                if escalation.should_notify(elapsed_timedelta):
+                    logging.warning("Alert escalation: notifying {} after {} seconds".format(
+                        escalation.ldap, escalation.delay_in_sec
+                    ))
+                    task.set_escalated(escalation)
+                    self._assign_task_to_user(task, escalation.ldap)
 
     def recover_in_progress_tasks(self):
         # type: () -> None
@@ -284,10 +334,10 @@ class SecurityBot(object):
         '''
         for task in self.tasker.get_active_tasks():
             # Log new task
+            task = self._store_or_update_active_task(task)
             logging.info('Recovering task for {0}'.format(task.username))
-
+            logging.debug('Recovering task {0}'.format(task))
             self._add_task(task)
-
 
     def handle_verifying_tasks(self):
         # type: () -> None
@@ -326,6 +376,9 @@ class SecurityBot(object):
         '''
         # Format the reason to be indented
         reason = '\n'.join(['>' + s for s in task.reason.split('\n')])
+        url = task.url
+        if url:
+            reason += '\n>%s' % url
 
         message = self.messages['alert'].format(task.description, reason)
         message += '\n'

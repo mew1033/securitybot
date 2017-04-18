@@ -1,20 +1,22 @@
 from unittest2 import TestCase
-from mock import Mock, patch
+from mock import Mock, patch, MagicMock
 
 import yaml
 import types
 import os.path
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import securitybot.bot as bot
 import securitybot.commands as commands
 import securitybot.user
 import securitybot.chat.chat
+from securitybot.tasker.tasker import Escalation
 
 MAIN_CONFIG = 'config/bot.yaml'
 COMMAND_CONFIG = 'config/commands.yaml'
 MESSAGE_CONFIG = 'config/messages.yaml'
+
 
 @patch('securitybot.chat.chat.Chat', autospec=True)
 def fake_init(self, tasker, auth_builder, reporting_channel, client):
@@ -30,12 +32,14 @@ def fake_init(self, tasker, auth_builder, reporting_channel, client):
     self.users = {}
     self.users_by_name = {}
     self.active_users = {}
+    self.active_tasks = {}
 
     self.commands = {}
 
     self.messages = {}
 
 bot.SecurityBot.__init__ = fake_init
+
 
 class ConfigTest(TestCase):
     # Validate configuration files
@@ -64,6 +68,7 @@ class ConfigTest(TestCase):
             config = yaml.safe_load(f)
             for name, string in config.items():
                 assert type(string) is str, 'All messages must be strings.'
+
 
 class BotMessageTest(TestCase):
     '''
@@ -103,6 +108,7 @@ class BotMessageTest(TestCase):
         self.bot.handle_messages()
         assert not self.bot.user_lookup.called, 'No user should have been looked up'
 
+
 class BotCommandTest(TestCase):
     '''
     Tests handling a command.
@@ -128,6 +134,7 @@ class BotCommandTest(TestCase):
         mock_command.assert_called_with(b, user, ['command'])
         b.chat.message_user.assert_called_with(user, 'failure_msg')
 
+
 class BotTaskTest(TestCase):
     '''
     Tests handling of tasks.
@@ -146,9 +153,12 @@ class BotTaskTest(TestCase):
         self.task.title = 'title'
         self.task.username = 'user'
         self.task.comment = ''
+        self.task.event_time = datetime.now()
 
         tasker.get_new_tasks.return_value = [self.task]
         tasker.get_pending_tasks.return_value = [self.task]
+        tasker.get_active_tasks.return_value = [self.task]
+        self.bot._store_or_update_active_task = MagicMock(return_value=self.task)
 
         self.user = securitybot.user.User({'id': 'id', 'name': 'user'}, None, self.bot)
         self.bot.users_by_name = {'user': self.user}
@@ -192,6 +202,34 @@ class BotTaskTest(TestCase):
         assert self.task.comment == 'invalid user'
         self.task.set_verifying.assert_called_with()
 
+    def test_task_escalation_without_delay(self):
+        self.task.username = "no assign"
+        self.task.escalation = [Escalation("should assign", 0, None)]
+
+        self.bot._assign_task_to_user = MagicMock()
+        self.bot.handle_new_tasks()
+
+        self.bot._assign_task_to_user.assert_called_with(self.task, "should assign")
+        self.task.set_escalated.assert_called_with(self.task.escalation[0])
+        self.assertEqual(self.bot._assign_task_to_user.call_count, 1)
+
+    def test_task_escalation_with_delay(self):
+        dummy_delay_sec = 600
+        self.task.username = "no assign"
+        self.task.escalation = [
+            Escalation("already escalated", 0, datetime.now()),
+            Escalation("with delay", dummy_delay_sec, None)
+        ]
+        self.task.event_time -= timedelta(seconds=dummy_delay_sec + 5)
+        self.bot._assign_task_to_user = MagicMock()
+
+        self.bot.handle_in_progress_tasks()
+
+        self.bot._assign_task_to_user.assert_called_with(self.task, "with delay")
+        self.task.set_escalated.assert_called_with(self.task.escalation[1])
+        self.assertEqual(self.bot._assign_task_to_user.call_count, 1)
+
+
 class BotUserTest(TestCase):
     def test_populate(self):
         '''
@@ -215,6 +253,7 @@ class BotUserTest(TestCase):
         sb.active_users = {'key': user}
         sb.handle_users()
         user.step.assert_called_with()
+
 
 class BotHelperTest(TestCase):
     '''

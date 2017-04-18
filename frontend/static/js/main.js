@@ -202,6 +202,7 @@ function submitCustom(form) {
   data["ldap"] = form.customLdap.value;
   data["description"] = form.customDescription.value;
   data["reason"] = form.customReason.value;
+  data["url"] = form.customUrl.value;
 
   // Check for empty title or ldap
   let hasError = false;

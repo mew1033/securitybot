@@ -123,4 +123,5 @@ class Slack(Chat):
         Sends some message to a desired user, using a User object and a string message.
         '''
         channel = self._api_call('im.open', user=user['id'])['channel']['id']
+        logging.info("Sending to '{}': '{}'".format(user['name'], repr(message.strip())))
         self.send_message(channel, message)

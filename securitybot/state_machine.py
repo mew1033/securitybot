@@ -108,6 +108,7 @@ class StateMachine(object):
         for transition in self._transitions[self.state.name]:
             if transition.condition():
                 logging.debug('Transitioning: {0}'.format(transition))
+                logging.debug(transition.__dict__)
                 transition.action()
                 self.state.on_exit()
                 self.state = transition.dest

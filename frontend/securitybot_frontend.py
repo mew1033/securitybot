@@ -4,6 +4,7 @@ Front-end for the Securitybot database.
 '''
 # Python includes
 import argparse
+import json
 from csv import reader
 import logging
 import os
@@ -16,6 +17,7 @@ import tornado.web
 
 # Securitybot includes
 import securitybot_api as api
+from securitybot.tasker.tasker import Escalation
 from securitybot.util import init_scribe_logging, init_sentry_logging
 
 # Typing
@@ -92,18 +94,52 @@ class BlacklistHandler(BaseHandler):
 class NewAlertHandler(BaseHandler):
     def post(self):
         response = api.build_response()
-        args = {}
+        post_args = {}
         for name in ['title', 'ldap', 'description', 'reason']:
-            args[name] = self.get_argument(name, default=None)
-            if args[name] is None:
+            post_args[name] = self.get_argument(name, default=None)
+            if post_args[name] is None:
                 response['error'] += 'ERROR: {} must be specified!\n'.format(name)
-        if all(v is not None for v in args.values()):
-            self.write(api.create_alert(args['ldap'],
-                                        args['title'],
-                                        args['description'],
-                                        args['reason']))
+        post_args['url'] = self.get_argument('url', default=None)
+
+        escalation_list = self.escalation_list_from_json(self.get_argument('escalation', default=None))
+        logging.debug('Escalation list: %s' % (str(escalation_list), ))
+        if all(v is not None for v in post_args.values()):
+            self.write(api.create_alert(post_args['ldap'],
+                                        post_args['title'],
+                                        post_args['description'],
+                                        post_args['reason'],
+                                        url=post_args['url'],
+                                        escalation=escalation_list
+                                        ))
         else:
             self.write(response)
+
+    def escalation_list_from_json(self, raw_json):
+        if not raw_json:
+            logging.debug('Received escalation parameter is empty')
+            return []
+
+        try:
+            escalation_list = json.loads(raw_json)
+        except ValueError:
+            logging.warning("Parsing JSON from 'escalation' parameter failed.")
+            return []
+
+        if not isinstance(escalation_list, list):
+            logging.debug("Escalation list is not a list.")
+            return []
+
+        result = []
+        for escalation_dict in escalation_list:
+            if isinstance(escalation_dict, dict):
+                try:
+                    ldap = escalation_dict.get('ldap', '')
+                    delay_sec = int(escalation_dict.get('delay_in_sec', 0))
+                    logging.debug("Adding to escalation '%s' with %d sec delay." % (ldap, delay_sec))
+                    result.append(Escalation(ldap, delay_sec))
+                except (ValueError, TypeError):
+                    logging.debug("Couldn't convert delay_in_sec to integer")
+        return result
 
 
 class IndexHandler(BaseHandler):
