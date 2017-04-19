@@ -440,8 +440,7 @@ class SecurityBot(object):
         Args:
             user (User): The user to greet.
         '''
-        msg_template = self.messages['greeting'].decode('unicode-escape')
-        self.chat.message_user(user, msg_template.format(user.get_name()))
+        self.chat.message_user(user, self.messages['greeting'].format(user.get_name()))
 
     # Command functions
     def is_command(self, command):

@@ -3,11 +3,6 @@ An object to manage user interactions.
 Wraps user information, all known alerts, and an active DM channel with the user.
 '''
 from os import getenv
-
-
-__author__ = 'Alex Bertsch'
-__email__ = 'abertsch@dropbox.com'
-
 import logging
 import pytz
 from datetime import datetime, timedelta
@@ -19,8 +14,12 @@ from securitybot.util import tuple_builder, get_expiration_time
 
 from typing import Any, Dict, List
 
+__author__ = 'Alex Bertsch'
+__email__ = 'abertsch@dropbox.com'
+
 ESCALATION_TIME = timedelta(hours=int(getenv('ESCALATION_TIME', 2)))
 BACKOFF_TIME = timedelta(hours=int(getenv('BACKOFF_TIME', 21)))
+
 
 class User(object):
     '''
@@ -38,9 +37,9 @@ class User(object):
             auth (Auth): The authentication object to use.
             parent (Bot): The bot object that spawned this user.
         '''
-        self._user = user # type: Dict[str, Any]
-        self.tasks = [] # type: List[Task]
-        self.pending_task = None # type: Task
+        self._user = user  # type: Dict[str, Any]
+        self.tasks = []  # type: List[Task]
+        self.pending_task = None  # type: Task
         # Authentication object specific to this user
         self.auth = auth
 
@@ -233,7 +232,7 @@ class User(object):
         # type: () -> None
         '''Marks the current task as needing verification and moves on.'''
         logging.info('Silently escalating {0} for {1}'
-                        .format(self.pending_task.description, self['name']))
+                     .format(self.pending_task.description, self['name']))
         # Append in the case that this is called when waiting for auth permission
         self.pending_task.comment += 'Automatically escalated. No response received.'
         self.pending_task.set_verifying()
@@ -267,7 +266,6 @@ class User(object):
                                                       description=self.pending_task.description,
                                                       comment=comment,
                                                       url=self.pending_task.url))
-
 
     # Exit actions
 
@@ -434,8 +432,15 @@ class User(object):
         if ('profile' in self._user and
                 'first_name' in self._user['profile'] and
                 self._user['profile']['first_name']):
-            return self._user['profile']['first_name']
-        return self._user['name']
+            name = self._user['profile']['first_name']
+        else:
+            name = self._user['name']
+
+        if isinstance(name, unicode):
+            name = name.encode('utf-8')
+
+        return name
+
 
 class UserException(Exception):
     pass
