@@ -15,8 +15,7 @@ def create_securitybot_task(search_name, hash, username, description, reason, ur
     Creates a new Maniphest task with the securitybot tag so that the bot can
     reach out to the relevant people.
     '''
-    logging.info('Creating new task about {} for {}'.format(description,
-                                                            username))
+    logging.info('Creating new task about {} for {}'.format(description, username))
 
     # Check for collision
     rows = SQLEngine.execute('SELECT title FROM alerts WHERE hash=UNHEX(%s)', (hash,))

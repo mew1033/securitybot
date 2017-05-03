@@ -305,7 +305,7 @@ class SecurityBot(object):
         for task in self.tasker.get_new_tasks():
             # Log new task
             task = self._store_or_update_active_task(task)
-            logging.info('Handling new task for {0}'.format(task.username))
+            logging.debug('Handling new task for {0}'.format(task.username))
             self._add_task(task)
 
     def handle_in_progress_tasks(self):
@@ -316,7 +316,7 @@ class SecurityBot(object):
         now = datetime.now()
         for task in self.tasker.get_active_tasks():
             task = self._store_or_update_active_task(task)
-            logging.info('Handling in-progress task {0}'.format(task))
+            logging.debug('Handling in-progress task {0}'.format(task))
             elapsed_timedelta = now - task.event_time
 
             for escalation in task.escalation:

@@ -43,7 +43,7 @@ class SQLTasker(Tasker):
             List of SQLTasks.
         '''
         alerts = SQLEngine.execute(GET_ALERTS, (level,))
-        logging.debug("DB result: {}".format(alerts))
+        logging.debug("DB query result: {}".format(alerts))
         tasks = [SQLTask(*alert) for alert in alerts]
 
         for task in tasks:
