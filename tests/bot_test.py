@@ -217,7 +217,7 @@ class BotTaskTest(TestCase):
         dummy_delay_sec = 600
         self.task.username = "no assign"
         self.task.escalation = [
-            Escalation("already escalated", 0, datetime.now(tz=pytz.utc)),
+            Escalation("already escalated", 0, datetime.now()),
             Escalation("with delay", dummy_delay_sec, None)
         ]
         self.task.event_time -= timedelta(seconds=dummy_delay_sec + 5)
