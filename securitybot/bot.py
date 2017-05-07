@@ -171,6 +171,10 @@ class SecurityBot(object):
         logging.info('Loaded commands: {0}'.format(self.commands.keys()))
 
     def _store_or_update_active_task(self, task):
+        """
+
+        :rtype: Task
+        """
         if task.hash in self.active_tasks:
             active_task = self.active_tasks.get(task.hash)
             active_task.status = task.status
@@ -291,7 +295,7 @@ class SecurityBot(object):
         if task.escalation and isinstance(task.escalation, list):
             for esc in task.escalation:
                 if esc.delay_in_sec == 0:
-                    logging.info("Notify {0} now".format(esc.ldap))
+                    logging.info("Notifying {} now for alert `{}`".format(esc.ldap, task.title))
                     task.set_escalated(esc)
                     self._assign_task_to_user(task, esc.ldap)
         else:
@@ -305,7 +309,6 @@ class SecurityBot(object):
         for task in self.tasker.get_new_tasks():
             # Log new task
             task = self._store_or_update_active_task(task)
-            logging.debug('Handling new task for {0}'.format(task.username))
             self._add_task(task)
 
     def handle_in_progress_tasks(self):
@@ -316,13 +319,14 @@ class SecurityBot(object):
         now = datetime.now()
         for task in self.tasker.get_active_tasks():
             task = self._store_or_update_active_task(task)
-            logging.debug('Handling in-progress task {0}'.format(task))
             elapsed_timedelta = now - task.event_time
 
             for escalation in task.escalation:
                 if escalation.should_notify(elapsed_timedelta):
-                    logging.warning("Alert escalation: notifying {} after {} seconds".format(
-                        escalation.ldap, escalation.delay_in_sec
+                    logging.warning("Escalating alert `{}`: notifying {} after {} seconds".format(
+                        task.title,
+                        escalation.ldap,
+                        escalation.delay_in_sec
                     ))
                     task.set_escalated(escalation)
                     self._assign_task_to_user(task, escalation.ldap)

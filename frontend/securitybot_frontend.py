@@ -99,19 +99,27 @@ class NewAlertHandler(BaseHandler):
             post_args[name] = self.get_argument(name, default=None)
             if post_args[name] is None:
                 response['error'] += 'ERROR: {} must be specified!\n'.format(name)
-        post_args['url'] = self.get_argument('url', default=None)
 
+        alert_url = self.get_argument('url', default=None)
         escalation_list = self.escalation_list_from_json(self.get_argument('escalation', default=None))
-        logging.debug('Escalation list: %s' % (str(escalation_list), ))
+
         if all(v is not None for v in post_args.values()):
             self.write(api.create_alert(post_args['ldap'],
                                         post_args['title'],
                                         post_args['description'],
                                         post_args['reason'],
-                                        url=post_args['url'],
-                                        escalation=escalation_list
+                                        url=alert_url,
+                                        escalation_list=escalation_list
                                         ))
         else:
+            logging.warning("Failed to create alert `{}`, some arguments were None.".format({
+                'title': post_args['title'],
+                'ldap': post_args['ldap'],
+                'description': post_args['description'],
+                'reason': post_args['reason'],
+                'url': alert_url,
+                'escalation': escalation_list
+            }))
             self.write(response)
 
     def escalation_list_from_json(self, raw_json):
@@ -135,10 +143,9 @@ class NewAlertHandler(BaseHandler):
                 try:
                     ldap = escalation_dict.get('ldap', '')
                     delay_sec = int(escalation_dict.get('delay_in_sec', 0))
-                    logging.debug("Adding to escalation '%s' with %d sec delay." % (ldap, delay_sec))
                     result.append(Escalation(ldap, delay_sec))
                 except (ValueError, TypeError):
-                    logging.debug("Couldn't convert delay_in_sec to integer")
+                    logging.warning("Error while creating escalation: couldn't convert delay_in_sec to integer")
         return result
 
 

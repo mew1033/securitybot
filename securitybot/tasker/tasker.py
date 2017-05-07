@@ -133,10 +133,10 @@ class Task(object):
 
 
 class Escalation(object):
-    def __init__(self, ldap, delay_in_sec, escalated_at=None):
+    def __init__(self, ldap, delay_in_sec, notified_at=None):
         self.ldap = ldap
         self.delay_in_sec = delay_in_sec
-        self._notified_at = escalated_at
+        self._notified_at = notified_at
 
     def is_notified(self):
         return self._notified_at is not None
@@ -147,5 +147,5 @@ class Escalation(object):
     def should_notify(self, elapsed_timedelta):
         return not self.is_notified() and elapsed_timedelta.seconds > self.delay_in_sec
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.__dict__)

@@ -298,7 +298,7 @@ def blacklist(**kwargs):
 
 
 # Custom alert creation
-def create_alert(ldap, title, description, reason, url=None, escalation=None):
+def create_alert(ldap, title, description, reason, url=None, escalation_list=None):
     # type: (str, str, str, str) -> Dict[str, Any]
     '''
     Creates a new alert.
@@ -308,15 +308,24 @@ def create_alert(ldap, title, description, reason, url=None, escalation=None):
         description: A short slug that describes the alert/user visible title
         reason: The reason for creating the alert
         url: An optional URL associated with the alert
-        escalation: A list of Escalations
+        escalation_list: A list of Escalation instances
     Content:
         Empty.
     '''
     response = build_response()
     try:
-        create_new_alert(title, ldap, description, reason, url=url, escalation_list=escalation)
+        create_new_alert(title, ldap, description, reason, url=url, escalation_list=escalation_list)
+        response['ok'] = True
     except SQLEngineException:
+        response['ok'] = False
         response['error'] = 'Invalid parameters'
-        return response
-    response['ok'] = True
+        logging.warning("Failed to create alert `{}`, couldn't insert into database.".format({
+            'title': title,
+            'ldap': ldap,
+            'description': description,
+            'reason': reason,
+            'url': url,
+            'escalation_list': escalation_list
+        }))
+
     return response

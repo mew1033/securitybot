@@ -96,22 +96,28 @@ def create_new_alert(title, ldap, description, reason, url=None, key=None, escal
     SQLEngine.execute('''
     INSERT INTO alerts (hash, ldap, title, description, reason, url, event_time)
     VALUES (UNHEX(%s), %s, %s, %s, %s, %s, NOW())
-    ''',
-                      (key, ldap, title, description, reason, url))
+    ''', (key, ldap, title, description, reason, url))
 
     SQLEngine.execute('''
     INSERT INTO user_responses (hash, ldap, comment, performed, authenticated, updated_at)
     VALUES (UNHEX(%s), ldap, '', false, false, NOW())
-    ''',
-                      (key,))
+    ''', (key,))
 
     if escalation_list is not None and isinstance(escalation_list, list):
         for escalation in escalation_list:
             SQLEngine.execute('INSERT INTO escalation (hash, ldap, delay_in_sec, escalated_at) VALUES (UNHEX(%s), %s, %s, NULL)',
                               (key, escalation.ldap, escalation.delay_in_sec))
 
-    SQLEngine.execute('INSERT INTO alert_status (hash, status) VALUES (UNHEX(%s), 0)',
-                      (key,))
+    SQLEngine.execute('INSERT INTO alert_status (hash, status) VALUES (UNHEX(%s), 0)', (key,))
+
+    logging.info("Created new alert: {}".format({
+        'title': title,
+        'ldap': ldap,
+        'description': description,
+        'reason': reason,
+        'url': url,
+        'escalation': escalation_list
+    }))
 
 
 def init_scribe_logging():
