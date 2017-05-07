@@ -1,6 +1,8 @@
 '''
 Authentication using Duo.
 '''
+import pytz
+
 __author__ = 'Alex Bertsch'
 __email__ = 'abertsch@dropbox.com'
 
@@ -60,7 +62,7 @@ class DuoAuth(Auth):
 
     def _recently_authed(self):
         # type: () -> bool
-        return (datetime.now() - self.auth_time) < AUTH_TIME
+        return (datetime.now(tz=pytz.utc) - self.auth_time) < AUTH_TIME
 
     def auth_status(self):
         # type: () -> int
@@ -69,7 +71,7 @@ class DuoAuth(Auth):
             if not res['waiting']:
                 if res['success']:
                     self.state = AUTH_STATES.AUTHORIZED
-                    self.auth_time = datetime.now()
+                    self.auth_time = datetime.now(tz=pytz.utc)
                 else:
                     self.state = AUTH_STATES.DENIED
                     self.auth_time = datetime.min

@@ -153,7 +153,7 @@ class BotTaskTest(TestCase):
         self.task.title = 'title'
         self.task.username = 'user'
         self.task.comment = ''
-        self.task.event_time = datetime.now()
+        self.task.event_time = datetime.now(tz=pytz.utc)
 
         tasker.get_new_tasks.return_value = [self.task]
         tasker.get_pending_tasks.return_value = [self.task]
@@ -217,7 +217,7 @@ class BotTaskTest(TestCase):
         dummy_delay_sec = 600
         self.task.username = "no assign"
         self.task.escalation = [
-            Escalation("already escalated", 0, datetime.now()),
+            Escalation("already escalated", 0, datetime.now(tz=pytz.utc)),
             Escalation("with delay", dummy_delay_sec, None)
         ]
         self.task.event_time -= timedelta(seconds=dummy_delay_sec + 5)

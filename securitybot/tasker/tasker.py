@@ -6,6 +6,9 @@ respectively.
 '''
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
+
+import pytz
+
 from securitybot.util import enum
 
 __author__ = 'Alex Bertsch'
@@ -82,7 +85,7 @@ class Task(object):
         self.comment = comment
         self.authenticated = authenticated
         self.status = status
-        self.event_time = event_time
+        self.event_time = pytz.utc.localize(event_time)
         self.escalation = escalation
 
     @abstractmethod
@@ -136,13 +139,13 @@ class Escalation(object):
     def __init__(self, ldap, delay_in_sec, notified_at=None):
         self.ldap = ldap
         self.delay_in_sec = delay_in_sec
-        self._notified_at = notified_at
+        self._notified_at = pytz.utc.localize(notified_at) if notified_at else None
 
     def is_notified(self):
         return self._notified_at is not None
 
     def set_notified(self):
-        self._notified_at = datetime.now()
+        self._notified_at = datetime.now(tz=pytz.utc)
 
     def should_notify(self, elapsed_timedelta):
         return not self.is_notified() and elapsed_timedelta.seconds > self.delay_in_sec

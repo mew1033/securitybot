@@ -316,7 +316,7 @@ class SecurityBot(object):
         '''
         Handles all in progress tasks.
         '''
-        now = datetime.now()
+        now = datetime.now(tz=pytz.utc)
         for task in self.tasker.get_active_tasks():
             task = self._store_or_update_active_task(task)
             elapsed_timedelta = now - task.event_time
