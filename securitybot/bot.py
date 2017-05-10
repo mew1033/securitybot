@@ -323,7 +323,7 @@ class SecurityBot(object):
 
             for escalation in task.escalation:
                 if escalation.should_notify(elapsed_timedelta):
-                    logging.warning("Escalating alert `{}`: notifying {} after {} seconds".format(
+                    logging.info("Escalating alert `{}`: notifying {} after {} seconds".format(
                         task.title,
                         escalation.ldap,
                         escalation.delay_in_sec

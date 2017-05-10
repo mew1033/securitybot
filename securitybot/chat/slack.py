@@ -100,7 +100,7 @@ class Slack(Chat):
         }
         '''
         events = self._slack.rtm_read()
-        messages = [e for e in events if e['type'] == 'message']
+        messages = [e for e in events if e.get('type') == 'message']
         return [m for m in messages if 'user' in m and m['channel'].startswith('D')]
 
     def send_message(self, channel, message):
