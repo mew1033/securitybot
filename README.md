@@ -54,6 +54,7 @@ To prevent having to modify the scripts, you can set the following environment v
 |SCRIBE_HOST|Scribe host (leave it empty for disabling Scribe logging)|
 |SCRIBE_PORT|Scribe port (1463 by default)|
 |SCRIBE_CATEGORY|Scribe category to use (optional)|
+|TEST_USERNAME|A username for test purposes: if an alert is associated to this username, the alert will be closed and the user will not be notified. (optional)|
 
 #### Docker
 

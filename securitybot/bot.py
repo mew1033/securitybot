@@ -2,6 +2,8 @@
 The internals of securitybot. Defines a core class SecurityBot that manages
 most of the bot's behavior.
 '''
+import os
+
 from securitybot import tasker
 
 __author__ = 'Alex Bertsch'
@@ -112,6 +114,10 @@ class SecurityBot(object):
         # Recover tasks
         self.recover_in_progress_tasks()
 
+        # username of the test user - doesn't notify this user and sets associated task as done
+        self.test_username = os.getenv('TEST_USERNAME', None)
+
+        logging.info('Test user is "{}", who will not be notified.'.format(self.test_username))
         logging.info('Done!')
 
     # Initialization functions
@@ -261,7 +267,13 @@ class SecurityBot(object):
         '''
         Assigns a task to a user
         '''
-        if self.valid_user(username):
+
+        if self.test_username and username == self.test_username:
+            logging.info("Task {} has the test user '{}' associated - closing the alert".format(
+                task.title, self.test_username))
+            task.set_verifying()
+
+        elif self.valid_user(username):
             # Ignore blacklisted users
             if self.blacklist.is_present(username):
                 logging.info('Ignoring task for blacklisted {0}'.format(username))
@@ -276,6 +288,7 @@ class SecurityBot(object):
                     self.greet_user(user)
                 user.add_task(task)
                 task.set_in_progress()
+
         else:
             # Escalate if no valid user is found
             logging.warn('Invalid user: {0}'.format(username))
@@ -293,12 +306,18 @@ class SecurityBot(object):
         '''
 
         if task.escalation and isinstance(task.escalation, list):
+            logging.debug("Task {} has escalation policy".format(task.title))
             for esc in task.escalation:
                 if esc.delay_in_sec == 0:
                     logging.info("Notifying {} now for alert `{}`".format(esc.ldap, task.title))
                     task.set_escalated(esc)
                     self._assign_task_to_user(task, esc.ldap)
+            if task.is_open():
+                logging.info("Task {}: escalation policy has no user with zero delay - setting task to in_progress"
+                             .format(task.title))
+                task.set_in_progress()
         else:
+            logging.debug("Task {} has no escalation policy - assigning to associated user".format(task.title))
             self._assign_task_to_user(task, task.username)
 
     def handle_new_tasks(self):
@@ -309,6 +328,7 @@ class SecurityBot(object):
         for task in self.tasker.get_new_tasks():
             # Log new task
             task = self._store_or_update_active_task(task)
+            logging.info('Handling new task: {}'.format(task.title))
             self._add_task(task)
 
     def handle_in_progress_tasks(self):

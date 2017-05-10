@@ -115,13 +115,26 @@ class Task(object):
         '''
         pass
 
-    @abstractmethod
+    def is_open(self):
+        # type: () -> bool
+        '''
+        Returns True if the task is Open, False otherwise
+        '''
+        return self.status == STATUS_LEVELS.OPEN
+
+    def is_in_progress(self):
+        # type: () -> bool
+        '''
+        Returns True if the task is InProgress, False otherwise
+        '''
+        return self.status == STATUS_LEVELS.INPROGRESS
+
     def is_verifying(self):
-        #type: () -> None
+        # type: () -> bool
         '''
         Returns True if the task is in Verifying state, False otherwise
         '''
-        pass
+        return self.status == STATUS_LEVELS.VERIFICATION
 
     @abstractmethod
     def set_escalated(self, escalation):

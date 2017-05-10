@@ -127,9 +127,6 @@ class SQLTask(Task):
         self._set_status(STATUS_LEVELS.VERIFICATION)
         self._set_response()
 
-    def is_verifying(self):
-        return self.status == STATUS_LEVELS.VERIFICATION
-
     def set_escalated(self, escalation):
         escalation.set_notified()
         SQLEngine.execute(SET_ESCALATED, (self.hash, escalation.ldap, escalation.delay_in_sec))
