@@ -147,6 +147,7 @@ class BotTaskTest(TestCase):
         self.bot.greet_user = Mock()
         self.bot.blacklist = Mock()
         self.bot.blacklist.is_present.return_value = False
+        self.bot.test_username = None
 
         self.patch_task = patch_task
         self.task = patch_task.start()
