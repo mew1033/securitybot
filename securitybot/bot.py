@@ -86,6 +86,9 @@ class SecurityBot(object):
             config_path (str): Path to configuration file
         '''
         logging.info('Creating securitybot.')
+        # username of the test user - doesn't notify this user and sets associated task as done
+        self.test_username = os.getenv('TEST_USERNAME', None)
+
         self.tasker = tasker
         self.auth_builder = auth_builder
         self.reporting_channel = reporting_channel
@@ -113,9 +116,6 @@ class SecurityBot(object):
 
         # Recover tasks
         self.recover_in_progress_tasks()
-
-        # username of the test user - doesn't notify this user and sets associated task as done
-        self.test_username = os.getenv('TEST_USERNAME', None)
 
         logging.info('Test user is "{}", who will not be notified.'.format(self.test_username))
         logging.info('Done!')
