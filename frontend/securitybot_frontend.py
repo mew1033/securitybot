@@ -4,6 +4,7 @@ Front-end for the Securitybot database.
 '''
 # Python includes
 import argparse
+import cProfile
 import json
 from csv import reader
 import logging
@@ -25,7 +26,34 @@ from typing import Sequence
 
 
 class BaseHandler(tornado.web.RequestHandler):
-    pass
+
+    def __init__(self, application, request, **kwargs):
+        self.profiler = None
+        super(BaseHandler, self).__init__(application, request, **kwargs)
+
+    def initialize(self):
+        super(BaseHandler, self).initialize()
+        if self.settings.get('profile_api'):
+            self.profiler = cProfile.Profile()
+
+    def prepare(self):
+        if self.profiler:
+            logging.info("Starting profiler")
+            self.profiler.enable()
+        super(BaseHandler, self).prepare()
+
+    def on_finish(self):
+        super(BaseHandler, self).on_finish()
+        if self.profiler:
+            self.profiler.disable()
+            logging.info("Stopping profiler")
+            import StringIO
+            import pstats
+            string_stream = StringIO.StringIO()
+            pstats.Stats(self.profiler, stream=string_stream)\
+                .sort_stats('cumulative')\
+                .print_stats(10)
+            logging.info(string_stream.getvalue())
 
 
 # Sentry integration
@@ -180,6 +208,7 @@ class SecuritybotService(object):
         ],
             xsrf_cookie=True,
             static_path=static_path,
+            profile_api=(os.getenv('PROFILE_API', None) is not None)
         )
         self.server = tornado.httpserver.HTTPServer(self._app)
         self.sockets = tornado.netutil.bind_sockets(self.port, '0.0.0.0')
@@ -194,6 +223,9 @@ class SecuritybotService(object):
             sockname = s.getsockname()
             logging.info('Listening on {socket}, port {port}'
                          .format(socket=sockname[0], port=sockname[1]))
+        logging.info("API profiling is turned on by environment variable: PROFILE_API={}".format(
+            self._app.settings.get('profile_api')
+        ))
 
     def start(self):
         # type: () -> None

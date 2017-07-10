@@ -34,5 +34,6 @@ services:
       - DB_USER=root
       - DB_PASS=${DB_PASS}
       - DB_NAME=securitybot
+      - PROFILE_API=${PROFILE_API}
 volumes:
  mysql-securitybot:
