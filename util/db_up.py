@@ -53,7 +53,7 @@ CREATE TABLE ignored (
 cur.execute(
     '''
 CREATE TABLE alerts (
-    hash BINARY(32) NOT NULL,
+    hash VARCHAR(255) NOT NULL,
     ldap VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE alerts (
 cur.execute(
     '''
 CREATE TABLE alert_status (
-    hash BINARY(32) NOT NULL,
+    hash VARCHAR(255) NOT NULL,
     status TINYINT UNSIGNED NOT NULL,
     PRIMARY KEY ( hash )
 )
@@ -78,7 +78,7 @@ CREATE TABLE alert_status (
 cur.execute(
     '''
 CREATE TABLE user_responses(
-    hash BINARY(32) NOT NULL,
+    hash VARCHAR(255) NOT NULL,
     ldap VARCHAR(255) NOT NULL,
     comment TEXT,
     performed BOOL,
@@ -92,7 +92,7 @@ CREATE TABLE user_responses(
 cur.execute(
     '''
 CREATE TABLE escalation(
-    hash BINARY(32) NOT NULL,
+    hash VARCHAR(255) NOT NULL,
     ldap VARCHAR(255) NOT NULL,
     delay_in_sec INTEGER NOT NULL,
     escalated_at DATETIME,
