@@ -108,7 +108,7 @@ ALERTS_FIELDS = ['hash',
 STATUS_WHERE = 'status = %s'
 PERFORMED_WHERE = 'performed = %s'
 TITLE_IN = 'title IN ({0})'
-LDAP_IN = 'ldap IN ({0})'
+LDAP_IN = 'alerts.ldap IN ({0})'
 BEFORE = 'event_time <= FROM_UNIXTIME(%s)'
 AFTER = 'event_time >= FROM_UNIXTIME(%s)'
 LIMIT = 'LIMIT %s'
