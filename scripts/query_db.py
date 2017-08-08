@@ -22,7 +22,7 @@ FROM ignored
 IGNORED_FIELDS = ['ldap', 'title', 'reason', 'until']
 
 MAIN_QUERY = '''
-SELECT HEX(alerts.hash),
+SELECT alerts.hash,
        title,
        ldap,
        reason,

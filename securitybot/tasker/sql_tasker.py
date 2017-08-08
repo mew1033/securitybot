@@ -10,7 +10,7 @@ from typing import List
 
 # Note: this order is provided to match the SQLTask constructor
 GET_ALERTS = '''
-SELECT HEX(alerts.hash),
+SELECT alerts.hash,
        title,
        alerts.ldap,
        reason,
@@ -27,8 +27,8 @@ JOIN alert_status ON alerts.hash = alert_status.hash
 WHERE status = %s
 '''
 
-GET_ESCALATION = '''SELECT ldap, delay_in_sec, escalated_at FROM escalation WHERE hash=UNHEX(%s)'''
-SET_ESCALATED = '''UPDATE escalation SET escalated_at=NOW() WHERE hash = UNHEX(%s) AND ldap=%s AND delay_in_sec=%s'''
+GET_ESCALATION = '''SELECT ldap, delay_in_sec, escalated_at FROM escalation WHERE hash=%s'''
+SET_ESCALATED = '''UPDATE escalation SET escalated_at=NOW() WHERE hash = %s AND ldap=%s AND delay_in_sec=%s'''
 
 
 class SQLTasker(Tasker):
@@ -69,7 +69,7 @@ class SQLTasker(Tasker):
 SET_STATUS = '''
 UPDATE alert_status
 SET status=%s
-WHERE hash=UNHEX(%s)
+WHERE hash=%s
 '''
 
 SET_RESPONSE = '''
@@ -79,7 +79,7 @@ SET comment=%s,
     performed=%s,
     authenticated=%s,
     updated_at=NOW()
-WHERE hash=UNHEX(%s)
+WHERE hash=%s
 '''
 
 

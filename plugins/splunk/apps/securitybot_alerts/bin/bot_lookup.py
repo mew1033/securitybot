@@ -16,7 +16,7 @@ from typing import Any, Sequence
 
 def find_on_hash(hash):
     # type: (str) -> Sequence[Any]
-    match = SQLEngine.execute('SELECT comment, performed, authenticated FROM user_responses WHERE hash=UNHEX(%s)', (hash,))
+    match = SQLEngine.execute('SELECT comment, performed, authenticated FROM user_responses WHERE hash=%s', (hash,))
     if len(match) != 1:
         # This catches collisions too, which is probably (hopefully) overkill
         return None
