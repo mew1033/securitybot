@@ -75,7 +75,7 @@ def build_query_dict(fields, results):
 # Querying alerts
 
 ALERTS_QUERY = '''
-SELECT HEX(alerts.hash),
+SELECT alerts.hash,
        title,
        alerts.ldap,
        reason,

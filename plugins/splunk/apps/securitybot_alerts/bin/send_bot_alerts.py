@@ -18,7 +18,7 @@ def create_securitybot_task(search_name, hash, username, description, reason, ur
     logging.info('Creating new task about {} for {}'.format(description, username))
 
     # Check for collision
-    rows = SQLEngine.execute('SELECT title FROM alerts WHERE hash=UNHEX(%s)', (hash,))
+    rows = SQLEngine.execute('SELECT title FROM alerts WHERE hash=%s', (hash,))
     if rows:
         raise CollisionException(
 '''We found a collision with {0} for {1}.
