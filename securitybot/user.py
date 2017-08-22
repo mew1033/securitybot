@@ -87,7 +87,7 @@ class User(object):
                 'source': 'action_performed_check',
                 'dest': 'task_finished',
                 'condition': self._cannot_2fa,
-                'action': lambda: self.send_message('no_2fa')
+                'action': lambda: self.send_message('no_2fa') if self.auth else None
             },
             # Ask for 2FA if user says action was performed and can do 2FA
             {
